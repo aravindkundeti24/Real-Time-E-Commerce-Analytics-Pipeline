@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  ##### Python data generator
+  data-generator:
+    build: ./data-generation
+    container_name: data-generator
+    depends_on:
+      - broker
+      - zookeeper
+      - init-kafka
+    
+    networks:
+      - backend
+    environment:
+      - KAFKA_BROKER=broker:${BROKER_INTERNAL_PORT}
+  
+  #### Elastic search
+  elasticsearch:
+  image: docker.elastic.co/elasticsearch/elasticsearch:7.13.2
+  container_name: elasticsearch
+  environment:
+    - "discovery.type=single-node"
+    - ES_JAVA_OPTS=-Xms4g -Xmx4g
+  ports:
+    - "9200:9200"
+  networks:
+    - backend
+  volumes:
+    - $PWD/esdata1:/usr/share/elasticsearch/data
+  healthcheck:
+    test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+  restart: unless-stopped
+
+  #### Kibana
