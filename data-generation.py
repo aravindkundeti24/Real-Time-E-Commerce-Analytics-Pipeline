@@ -18,12 +18,12 @@ fake = Faker()
 # exit(0)
 
 # KAFKA CONFIGURATION
-os.environ.pop('KAFKA_BROKER')
-kafka_broker = os.getenv('KAFKA_BROKER', 'localhost:9092')
-print(kafka_broker)
+# os.environ.pop('KAFKA_BROKER')
+# kafka_broker = os.getenv('KAFKA_BROKER', 'localhost:9092')
+# print(kafka_broker)
 
 kafka_producer = KafkaProducer(
-                            bootstrap_servers=[kafka_broker],
+                            bootstrap_servers='localhost:9092',
                             value_serializer=lambda x: json.dumps(x).encode('utf-8')
                         )
 
@@ -89,6 +89,29 @@ def generate_product_view():
         "product_id": random.choice(products),
         "timestamp": fake.date_time_this_year().isoformat(),
         "view_duration": random.randint(10, 300)  # Duration in seconds
+    }
+
+
+# Generate System Log Data
+def generate_system_log():
+    log_levels = ["INFO", "WARNING", "ERROR"]
+    return {
+        "log_id": fake.uuid4(),
+        "timestamp": fake.date_time_this_year().isoformat(),
+        "level": random.choice(log_levels),
+        "message": fake.sentence()
+    }
+
+# Generate User Interaction Data
+def generate_user_interaction():
+    interaction_types = ["wishlist_addition", "review", "rating"]
+    return {
+        "interaction_id": fake.uuid4(),
+        "customer_id": random.choice(customers),
+        "product_id": random.choice(products),
+        "timestamp": fake.date_time_this_year().isoformat(),
+        "interaction_type": random.choice(interaction_types),
+        "details": fake.sentence() if interaction_types == "review" else None
     }
 
 # print(generate_product_view())
