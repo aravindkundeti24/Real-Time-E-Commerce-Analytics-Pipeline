@@ -19,3 +19,7 @@ spark = SparkSession.builder \\
 
 
 spark.sparkContext.setLogLevel("ERROR")
+
+# Kafka configuration
+kafka_bootstrap_servers = "broker:29092,broker2:29094"
+
