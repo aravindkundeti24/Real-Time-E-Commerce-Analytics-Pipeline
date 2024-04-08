@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 
 
 # Initialize Spark Session
-spark = SparkSession.builder \\
-    .appName("Ecommerce Data Analysis") \\
-    .config("spark.es.nodes", "elasticsearch") \\
-    .config("spark.es.port", "9200") \\
-    .config("spark.es.nodes.wan.only", "true") \\
+spark = SparkSession.builder \
+    .appName("Ecommerce Data Analysis") \
+    .config("spark.es.nodes", "elasticsearch") \
+    .config("spark.es.port", "9200") \
+    .config("spark.es.nodes.wan.only", "true") \
     .getOrCreate()
 
 
