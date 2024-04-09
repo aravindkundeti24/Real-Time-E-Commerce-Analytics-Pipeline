@@ -12,18 +12,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 fake = Faker()
 
-# for name, value in os.environ.items():
-#     print("{0}: {1}".format(name, value))
-
-# exit(0)
 
 # KAFKA CONFIGURATION
 # os.environ.pop('KAFKA_BROKER')
-# kafka_broker = os.getenv('KAFKA_BROKER', 'localhost:9092')
-# print(kafka_broker)
+kafka_broker = os.getenv('KAFKA_BROKER', 'broker:9092')
+print(f"kafka broker name {kafka_broker}")
 
 kafka_producer = KafkaProducer(
-                            bootstrap_servers='localhost:9092',
+                            bootstrap_servers=[kafka_broker],
                             value_serializer=lambda x: json.dumps(x).encode('utf-8')
                         )
 
@@ -113,6 +109,36 @@ def generate_user_interaction():
         "interaction_type": random.choice(interaction_types),
         "details": fake.sentence() if interaction_types == "review" else None
     }
+
+
+# Function to send data to kafka topics
+def send_data():
+    if random.random() < 0.5:
+        customer = generate_customer()
+        kafka_producer.send('ecommerce_customers', value=customer)
+    else:
+        product = generate_product()
+        kafka_producer.send('ecommerce_product', value=product)
+
+    if customers and product:
+        transaction = generate_transaction()
+        kafka_producer.send('ecommerce_transactions', value=transaction)
+        product_view = generate_product_view()
+
+        if product_view:
+            kafka_producer.send('ecommerce_product_views', value=product_view)
+            user_interaction = generate_user_interaction()
+        if user_interaction:
+            kafka_producer.send('ecommerce_user_interactions', value=user_interaction)
+    kafka_producer.send('ecommerce_system_logs', value=generate_system_log())
+
+
+# Parallel Data Generation
+with ThreadPoolExecutor(max_workers=5) as executor:
+    while True:
+        executor.submit(send_data)
+        time.sleep(random.uniform(0.01, 0.1))
+
 
 # print(generate_product_view())
 del(customers, products)
