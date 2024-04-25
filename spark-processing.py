@@ -23,3 +23,25 @@ spark.sparkContext.setLogLevel("ERROR")
 # Kafka configuration
 kafka_bootstrap_servers = "broker:29092,broker2:29094"
 
+# Read data from 'ecommerce_customers' topic
+customerSchema = StructType([
+    StructField("customer_id", StringType(), True),
+    StructField("name", StringType(), True),
+    StructField("email", StringType(), True),
+    StructField("location", StringType(), True),
+    StructField("age", IntegerType(), True),
+    StructField("gender", StringType(), True),
+    StructField("account_created", StringType(), True),
+    StructField("last_login", TimestampType(), True),
+])
+
+customerDF = (spark.readStream
+                .format("kafka")
+                .option("kafka.bootstrap.servers", kafka_bootstrap_servers)
+                .option("startingOffsets", "earliest")
+                .load()
+                .selectExpr("CAST(value AS STRING)")
+                .select(from_json("value", customerSchema).alias("data"))
+                .select("data.*")
+                .withWatermark("last_login", "2 hours")
+                )

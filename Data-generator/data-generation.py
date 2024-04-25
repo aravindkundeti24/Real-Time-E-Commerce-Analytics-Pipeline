@@ -139,6 +139,3 @@ with ThreadPoolExecutor(max_workers=5) as executor:
         executor.submit(send_data)
         time.sleep(random.uniform(0.01, 0.1))
 
-
-# print(generate_product_view())
-del(customers, products)
