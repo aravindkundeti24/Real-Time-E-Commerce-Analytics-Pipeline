@@ -196,6 +196,65 @@ productAnalysisDF = productDF \
     )
 
 
+#Analyzing sales data
+salesAnalysisDF = transactionDF \
+    .groupBy(
+        window(col("processingTime"), "1 hour"),  # Window based on processingTime
+        "product_id"
+    ) \
+    .agg(
+        count("transaction_id").alias("number_of_sales"),
+        sum("quantity").alias("total_quantity_sold"),
+        approx_count_distinct("customer_id").alias("unique_customers")  # Use approx_count_distinct
+    ) \
+    .select(
+        col("window.start").alias("window_start"),
+        col("window.end").alias("window_end"),
+        col("product_id"),
+        col("number_of_sales"),
+        col("total_quantity_sold"),
+        col("unique_customers")
+    )
+                               
+# Understanding customer interest in products.
+productViewsAnalysisDF = productViewDF \
+    .withWatermark("timestamp", "2 hours") \
+    .groupBy(
+        window(col("timestamp"), "1 hour"), 
+        "product_id"
+    ) \
+    .agg(
+        count("view_id").alias("total_views"),
+        avg("view_duration").alias("average_view_duration")
+    ) \
+    .select(
+        col("window.start").alias("window_start"),
+        col("window.end").alias("window_end"),
+        col("product_id"),
+        col("total_views"),
+        col("average_view_duration")
+    )
+
+
+# User Interaction Analysis
+interactionAnalysisDF = userInteractionDF \
+    .withWatermark("timestamp", "2 hours") \
+    .groupBy(
+        window(col("timestamp"), "1 hour"), 
+        "interaction_type"
+    ) \
+    .agg(
+        count("interaction_id").alias("total_interactions"),
+        approx_count_distinct("customer_id").alias("unique_users_interacted")  # Use approx_count_distinct
+    ) \
+    .select(
+        col("window.start").alias("window_start"),
+        col("window.end").alias("window_end"),
+        col("interaction_type"),
+        col("total_interactions"),
+        col("unique_users_interacted")
+    )
+
 
 
 
