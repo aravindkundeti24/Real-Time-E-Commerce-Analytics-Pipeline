@@ -69,3 +69,32 @@ productDF = spark.readStream \
     .withColumn("processingTime", current_timestamp())  # Add processing timestamp
 
 productDF = productDF.withWatermark("processingTime", "2 hours")
+
+
+# Read data from 'ecommerce_transactions' topic
+transactionSchema = StructType([
+    StructField("transaction_id", StringType(), True),
+    StructField("customer_id", StringType(), True),
+    StructField("product_id", StringType(), True),
+    StructField("quantity", IntegerType(), True),
+    StructField("date_time", TimestampType(), True),  
+    StructField("status", StringType(), True),
+    StructField("payment_method", StringType(), True)
+])
+transactionDF = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+    .option("subscribe", "ecommerce_transactions") \
+    .option("startingOffsets", "earliest") \
+    .load() \
+    .selectExpr("CAST(value AS STRING)") \
+    .select(from_json("value", transactionSchema).alias("data")) \
+    .select("data.*")
+
+transactionDF = transactionDF.withColumn("processingTime", current_timestamp())
+transactionDF = transactionDF.withWatermark("processingTime", "2 hours")
+
+
+
+
+
