@@ -45,3 +45,27 @@ customerDF = (spark.readStream
                 .select("data.*")
                 .withWatermark("last_login", "2 hours")
                 )
+
+
+# Read data from 'ecommerce_products' topic
+productSchema = StructType([
+    StructField("product_id", StringType(), True),
+    StructField("name", StringType(), True),
+    StructField("category", StringType(), True),
+    StructField("price", DoubleType(), True),
+    StructField("stock_quantity", IntegerType(), True),
+    StructField("supplier", StringType(), True),
+    StructField("rating", DoubleType(), True)
+])
+productDF = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+    .option("subscribe", "ecommerce_products") \
+    .option("startingOffsets", "earliest") \
+    .load() \
+    .selectExpr("CAST(value AS STRING)") \
+    .select(from_json("value", productSchema).alias("data")) \
+    .select("data.*") \
+    .withColumn("processingTime", current_timestamp())  # Add processing timestamp
+
+productDF = productDF.withWatermark("processingTime", "2 hours")
