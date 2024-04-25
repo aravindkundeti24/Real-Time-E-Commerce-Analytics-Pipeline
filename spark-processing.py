@@ -119,3 +119,27 @@ productViewDF = productViewDF.withColumn("processingTime", current_timestamp())
 productViewDF = productViewDF.withWatermark("processingTime", "2 hours")
 
 
+# Read data from 'ecommerce_system_logs' topic
+systemLogSchema = StructType([
+    StructField("log_id", StringType(), True),
+    StructField("timestamp", TimestampType(), True),  
+    StructField("level", StringType(), True),
+    StructField("message", StringType(), True)
+])
+
+systemLogDF = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+    .option("subscribe", "ecommerce_system_logs") \
+    .option("startingOffsets", "earliest") \
+    .load() \
+    .selectExpr("CAST(value AS STRING)") \
+    .select(from_json("value", systemLogSchema).alias("data")) \
+    .select("data.*")
+
+systemLogDF = systemLogDF.withColumn("processingTime", current_timestamp())
+systemLogDF = systemLogDF.withWatermark("processingTime", "2 hours")
+
+
+
+
