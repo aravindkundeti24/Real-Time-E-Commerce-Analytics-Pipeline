@@ -165,6 +165,36 @@ userInteractionDF = userInteractionDF.withColumn("processingTime", current_times
 userInteractionDF = userInteractionDF.withWatermark("processingTime", "2 hours")
 
 
+#This analysis  focus on demographics and account activity.
+customerAnalysisDF = (customerDF
+                      .groupBy(
+                          window(col("last_login"), "1 day"),  # Windowing based on last_login
+                          "gender"
+                      )
+                      .agg(
+                          count("customer_id").alias("total_customers"),
+                          max("last_login").alias("last_activity")
+                      )
+                     )
+
+# Analyzing product popularity and stock status with windowing
+productAnalysisDF = productDF \
+    .groupBy(
+        window(col("processingTime"), "1 hour"),  # Window based on processingTime
+        "category"
+    ) \
+    .agg(
+        avg("price").alias("average_price"),
+        sum("stock_quantity").alias("total_stock")
+    ) \
+    .select(
+        col("window.start").alias("window_start"),
+        col("window.end").alias("window_end"),
+        col("category"),
+        col("average_price"),
+        col("total_stock")
+    )
+
 
 
 
