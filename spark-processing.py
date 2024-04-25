@@ -141,5 +141,31 @@ systemLogDF = systemLogDF.withColumn("processingTime", current_timestamp())
 systemLogDF = systemLogDF.withWatermark("processingTime", "2 hours")
 
 
+# Read data from 'ecommerce_user_interactions' topic
+userInteractionSchema = StructType([
+    StructField("interaction_id", StringType(), True),
+    StructField("customer_id", StringType(), True),
+    StructField("product_id", StringType(), True),
+    StructField("timestamp", TimestampType(), True),  
+    StructField("interaction_type", StringType(), True),
+    StructField("details", StringType(), True)
+])
+
+userInteractionDF = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
+    .option("subscribe", "ecommerce_user_interactions") \
+    .option("startingOffsets", "earliest") \
+    .load() \
+    .selectExpr("CAST(value AS STRING)") \
+    .select(from_json("value", userInteractionSchema).alias("data")) \
+    .select("data.*")
+
+userInteractionDF = userInteractionDF.withColumn("processingTime", current_timestamp())
+userInteractionDF = userInteractionDF.withWatermark("processingTime", "2 hours")
+
+
+
+
 
 
